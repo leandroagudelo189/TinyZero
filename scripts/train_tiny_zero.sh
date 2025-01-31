@@ -27,3 +27,73 @@ trainer.test_freq=100 \
 trainer.project_name=TinyZero \
 trainer.experiment_name=$EXPERIMENT_NAME \
 trainer.total_epochs=15 2>&1 | tee verl_demo.log
+
+# Enhanced training script with additional options
+# Training modes: standard, debug, and extended
+# Logging configurations: basic and detailed
+# Hyperparameter tuning: enable or disable
+
+# Define training mode
+TRAINING_MODE="standard"  # Options: standard, debug, extended
+
+# Define logging configuration
+LOGGING_CONFIG="basic"  # Options: basic, detailed
+
+# Define hyperparameter tuning
+HYPERPARAM_TUNING="disable"  # Options: enable, disable
+
+# Set additional configurations based on training mode
+if [ "$TRAINING_MODE" == "debug" ]; then
+    data.train_batch_size=64
+    data.val_batch_size=64
+    trainer.total_epochs=5
+elif [ "$TRAINING_MODE" == "extended" ]; then
+    data.train_batch_size=256
+    data.val_batch_size=256
+    trainer.total_epochs=50
+fi
+
+# Set logging level based on logging configuration
+if [ "$LOGGING_CONFIG" == "detailed" ]; then
+    trainer.logger="DEBUG"
+else
+    trainer.logger="INFO"
+fi
+
+# Enable hyperparameter tuning if specified
+if [ "$HYPERPARAM_TUNING" == "enable" ]; then
+    trainer.hyperparam_tuning="True"
+else
+    trainer.hyperparam_tuning="False"
+fi
+
+# Execute the training script with enhanced configurations
+python -m vel.trainer.main_ppo \
+    data.train_files=$DATA_DIR/train.parquet \
+    data.val_files=$DATA_DIR/test.parquet \
+    data.train_batch_size=128 \
+    data.val_batch_size=128 \
+    data.max_prompt_length=256 \
+    data.max_response_length=1024 \
+    actor.rollout_ref.model_path=$BASE_MODEL \
+    actor.rollout_ref.actor.optim.lr=6e-6 \
+    actor.rollout_ref.actor.optim.batch_size=128 \
+    actor.rollout_ref.actor.optim.micro_batch_size=4 \
+    actor.rollout_ref.rollout.log_prob_micro_batch_size=8 \
+    actor.rollout_ref.rollout.tensor_model_parallel_size=$ROLLOUT_TP_SIZE \
+    actor.rollout_ref.rollout.gpu_memory_utilization=0.4 \
+    actor.rollout_ref.ref.log_prob_micro_batch_size=4 \
+    critic.optim.lr=1e-5 \
+    critic.model_path=$BASE_MODEL \
+    critic.ppo_micro_batch_size=4 \
+    algorithm.kl_ctl_kl_target=0.02 \
+    trainer.logger="$trainer.logger" \
+    trainer.val_before_train=False \
+    trainer.default_hfds_dir=$HFDS_DIR \
+    trainer.n_gpus_per_node=$NUM_GPUS \
+    trainer.num_nodes=1 \
+    trainer.save_freq=100 \
+    trainer.test_freq=100 \
+    trainer.project_name=TinyZero \
+    trainer.experiment_name=$EXPERIMENT_NAME \
+    trainer.total_epochs=25 | tee verl_demo.log
