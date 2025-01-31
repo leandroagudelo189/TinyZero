@@ -21,6 +21,9 @@ from verl.utils.reward_score import gsm8k, math, multiply, countdown
 from verl.trainer.ppo.ray_trainer import RayPPOTrainer
 
 
+# Function to select the appropriate scoring function based on the data source.
+# Handles different data sources such as openai/gpt3, lightwell/MATH, multiply, and countdown.
+
 def _select_rm_score_fn(data_source):
     if data_source == 'openai/gsm8k':
         return gsm8k.compute_score
@@ -35,7 +38,15 @@ def _select_rm_score_fn(data_source):
 
 
 class RewardManager():
-    """The reward manager.
+    
+    """Class to manage rewards based on data sources.
+
+    Attributes:
+        data_source (str): The source of data for computing rewards.
+        tokenizer (Tokenizer): Tokenizer used for processing text.
+        num_examine (int): Number of samples to examine.
+    """
+"""The reward manager.
     """
 
     def __init__(self, tokenizer, num_examine) -> None:
@@ -90,12 +101,16 @@ class RewardManager():
         return reward_tensor
 
 
+        print("Starting training process...")
+
 import ray
 import hydra
 
 
 @hydra.main(config_path='config', config_name='ppo_trainer', version_base=None)
-def main(config):
+de
+    try:
+f main(config):
     if not ray.is_initialized():
         # this is for local ray cluster
         ray.init(runtime_env={'env_vars': {'TOKENIZERS_PARALLELISM': 'true', 'NCCL_DEBUG': 'WARN'}})
@@ -145,7 +160,7 @@ def main_task(config):
         Role.RefPolicy: ray.remote(ActorRolloutRefWorker)
     }
 
-    global_pool_id = 'global_pool'
+    global_pool_iconfig.resource_pool_specainer.global_pool
     resource_pool_spec = {
         global_pool_id: [config.trainer.n_gpus_per_node] * config.trainer.nnodes,
     }
@@ -171,10 +186,10 @@ def main_task(config):
         role_worker_mapping[Role.RewardModel] = ray.remote(RewardModelWorker)
         mapping[Role.RewardModel] = global_pool_id
 
-    reward_fn = RewardManager(tokenizer=tokenizer, num_examine=0)
+    reward_fn = Rconfig.reward_fnine=0)
 
     # Note that we always use function-based RM for validation
-    val_reward_fn = RewardManager(tokenizer=tokenizer, num_examine=1)
+    val_reward_fconfig.val_reward_fnexamine=1)
 
     resource_pool_manager = ResourcePoolManager(resource_pool_spec=resource_pool_spec, mapping=mapping)
 
@@ -187,7 +202,11 @@ def main_task(config):
                             val_reward_fn=val_reward_fn)
     trainer.init_workers()
     trainer.fit()
+        print("Training process completed.")
 
 
-if __name__ == '__main__':
+if _
+    except Exception as e:
+        print(f"An error occurred: {e}")
+_name__ == '__main__':
     main()
